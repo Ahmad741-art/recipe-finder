@@ -1,0 +1,62 @@
+import requests
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+# Replace 'your_api_key' with your actual Spoonacular API key
+API_KEY = 'your_api_key'
+BASE_URL = 'https://api.spoonacular.com/recipes/findByIngredients'
+
+def get_recipes(ingredients):
+    params = {
+        'apiKey': API_KEY,
+        'ingredients': ingredients,
+        'number': 10  # Number of recipes to return
+    }
+    response = requests.get(BASE_URL, params=params)
+    return response.json()
+
+def search_recipes():
+    ingredients = ingredient_entry.get()
+    if not ingredients:
+        messagebox.showwarning("Input Error", "Please enter at least one ingredient.")
+        return
+
+    recipes = get_recipes(ingredients)
+    display_recipes(recipes)
+
+def display_recipes(recipes):
+    results_text.delete(1.0, tk.END)
+    if not recipes:
+        results_text.insert(tk.END, "No recipes found.\n")
+        return
+
+    for recipe in recipes:
+        title = recipe.get('title', 'No title')
+        used_ingredients = [ingredient['name'] for ingredient in recipe.get('usedIngredients', [])]
+        missed_ingredients = [ingredient['name'] for ingredient in recipe.get('missedIngredients', [])]
+        recipe_text = f"Recipe: {title}\n"
+        recipe_text += f"Used Ingredients: {', '.join(used_ingredients)}\n"
+        recipe_text += f"Missing Ingredients: {', '.join(missed_ingredients)}\n"
+        recipe_text += "-" * 40 + "\n"
+        results_text.insert(tk.END, recipe_text)
+
+# Create the main application window
+root = tk.Tk()
+root.title("Recipe Finder")
+
+# Create and place the input widgets
+ingredient_label = ttk.Label(root, text="Enter ingredients (comma-separated):")
+ingredient_label.pack(pady=10)
+
+ingredient_entry = ttk.Entry(root, width=50)
+ingredient_entry.pack(pady=5)
+
+search_button = ttk.Button(root, text="Search Recipes", command=search_recipes)
+search_button.pack(pady=10)
+
+# Create and place the results text box
+results_text = tk.Text(root, width=80, height=20, wrap='word')
+results_text.pack(pady=10)
+
+# Run the main event loop
+root.mainloop()
